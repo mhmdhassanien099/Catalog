@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realistic Book Flip With Spreads</title>
+
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #d6c7a5, #b79a6b);
+  font-family: 'Georgia', serif;
+}
+
+.book {
+  width: 1100px;
+  height: 700px;
+  position: relative;
+  perspective: 3000px;
+}
+
+/* Base Page */
+.page {
+  width: 550px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  background: #fffdf4;
+  border: 1px solid #d6c5a0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform-style: preserve-3d;
+  transition: transform 1s cubic-bezier(0.4, 1.4, 0.6, 1);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.07), 0 15px 40px rgba(0,0,0,0.25);
+}
+
+/* Page Number footer */
+.page-number {
+  position: absolute;
+  bottom: 15px;
+  text-align: center;
+  width: 100%;
+  font-size: 1rem;
+  color: #6d573b;
+  opacity: 0.8;
+}
+
+/* Cover */
+#coverPage {
+  background: url("cover.jpg") center/cover no-repeat;
+  transform-origin: left;
+  z-index: 20;
+}
+
+/* Pages */
+#leftPage { left: 0; }
+#rightPage { left: 550px; }
+#flipPage {
+  left: 550px;
+  transform-origin: left;
+  z-index: 30;
+}
+
+/* Flip animation */
+.flipped {
+  transform: rotateY(-180deg);
+}
+
+/* Navigation arrows */
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+  border: none;
+  cursor: pointer;
+  font-size: 2.2rem;
+  color: white;
+  transition: 0.25s;
+}
+.nav-arrow:hover { background: rgba(0,0,0,0.35); }
+#prevBtn { left: -90px; }
+#nextBtn { right: -90px; }
+
+.page-inner {
+  padding: 40px;
+  text-align: center;
+}
+
+/* Page count display */
+#pageIndicator {
+  margin-top: 15px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #4a381f;
+  text-shadow: 1px 1px 2px #fff;
+}
+
+/* Add Page Button */
+#addPageBtn {
+  margin-top: 10px;
+  padding: 12px 25px;
+  background: #6d421f;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+#addPageBtn:hover { background: #8d5c2c; }
+</style>
+</head>
+<body>
+
+<div class="book">
+  <div class="page" id="coverPage"></div>
+  <div class="page" id="leftPage" style="display:none;"></div>
+  <div class="page" id="rightPage" style="display:none;"></div>
+  <div class="page" id="flipPage" style="display:none;"></div>
+
+  <button class="nav-arrow" id="prevBtn">❮</button>
+  <button class="nav-arrow" id="nextBtn">❯</button>
+</div>
+
+<div id="pageIndicator"></div>
+<button id="addPageBtn">+ Add Page</button>
+
+<script>
+let pages = [
+  [
+    `<div class="page-inner"><h2>Welcome</h2><p>This is your introduction page.</p></div>`,
+    `<div class="page-inner"><h2>What’s Inside</h2><p>Enjoy flipping through!</p></div>`
+  ]
+];
+
+let spread = 0;
+let isOpened = false;
+
+const coverPage = document.getElementById("coverPage");
+const leftPage = document.getElementById("leftPage");
+const rightPage = document.getElementById("rightPage");
+const flipPage = document.getElementById("flipPage");
+const pageIndicator = document.getElementById("pageIndicator");
+
+function showSpread() {
+  const leftNumber = spread * 2 + 1;
+  const rightNumber = spread * 2 + 2;
+
+  leftPage.innerHTML = pages[spread][0] + `<div class="page-number">${leftNumber}</div>`;
+  rightPage.innerHTML = pages[spread][1] + `<div class="page-number">${rightNumber}</div>`;
+  flipPage.innerHTML = pages[spread][1] + `<div class="page-number">${rightNumber}</div>`;
+}
+
+function updatePageIndicator() {
+  if (!isOpened) pageIndicator.innerHTML = "Cover";
+  else pageIndicator.innerHTML = `Spread ${spread + 1} / ${pages.length}`;
+}
+
+document.getElementById("nextBtn").onclick = () => {
+  if (!isOpened) {
+    coverPage.classList.add("flipped");
+    setTimeout(() => { coverPage.style.display = "none"; }, 1000);
+    leftPage.style.display = "flex";
+    rightPage.style.display = "flex";
+    flipPage.style.display = "flex";
+    isOpened = true;
+    showSpread();
+    updatePageIndicator();
+    return;
+  }
+
+  if (spread < pages.length - 1) {
+    flipPage.classList.add("flipped");
+    setTimeout(() => {
+      flipPage.classList.remove("flipped");
+      spread++;
+      showSpread();
+      updatePageIndicator();
+    }, 1000);
+  }
+};
+
+document.getElementById("prevBtn").onclick = () => {
+  if (isOpened && spread === 0) {
+    coverPage.style.display = "flex";
+    coverPage.classList.remove("flipped");
+    leftPage.style.display = "none";
+    rightPage.style.display = "none";
+    flipPage.style.display = "none";
+    isOpened = false;
+    updatePageIndicator();
+    return;
+  }
+
+  if (spread > 0) {
+    flipPage.classList.add("flipped");
+    setTimeout(() => {
+      flipPage.classList.remove("flipped");
+      spread--;
+      showSpread();
+      updatePageIndicator();
+    }, 1000);
+  }
+};
+
+document.getElementById("addPageBtn").onclick = () => {
+  pages.push([
+    `<div class="page-inner"><h2>New Page</h2><p>Left side content.</p></div>`,
+    `<div class="page-inner"><h2>New Page</h2><p>Right side content.</p></div>`
+  ]);
+
+  updatePageIndicator();
+  alert("✅ Page Added! Use arrows to flip to it.");
+};
+
+updatePageIndicator();
+</script>
+
+</body>
+</html>
